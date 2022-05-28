@@ -35,7 +35,7 @@ router.get('/', (req, res) => {
     });
 });
 
-router.get('/:id', (req, res) => {
+router.get('/post/:id', (req, res) => {
   Post.findOne({
     where: {
       id: req.params.id
@@ -67,7 +67,12 @@ router.get('/:id', (req, res) => {
         res.status(404).json({ message: 'No post found with this id' });
         return;
       }
-      res.json(dbPostData);
+
+      // serialize the data
+      const post = dbPostData.get({ plain: true });
+
+      // pass data to template
+      res.render('single-post', { post });
     })
     .catch(err => {
       console.log(err);
@@ -90,13 +95,17 @@ router.post('/', (req, res) => {
 });
 
 router.put('/upvote', (req, res) => {
-  // custom static method created in models/Post.js
-  Post.upvote({ ...req.body, user_id: req.session.user_id }, { Vote, Comment, User })
+  //make sure the session exists first
+  if(req.session) {
+    // custom static method created in models/Post.js
+    Post.upvote({ ...req.body, user_id: req.session.user_id }, { Vote, Comment, User })
     .then(updatedVoteData => res.json(updatedVoteData))
     .catch(err => {
       console.log(err);
       res.status(500).json(err);
     });
+  }
+  
 });
 
 router.put('/:id', (req, res) => {
